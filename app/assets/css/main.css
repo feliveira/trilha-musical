@@ -1,0 +1,440 @@
+/* =========================================================
+   Tokens — tema claro: cinzas, branco e azul pastel
+   Cada cor de destaque tem:
+     --x        tom médio (ícones, bordas, texto de destaque)
+     --x-dark   tom escuro (texto sobre fundos suaves)
+     --x-fill   tom pastel (preenchimento de botões, nós, badges)
+     --x-shadow sombra sólida "3D" sob o preenchimento pastel
+     --x-soft   fundo bem claro
+     --on-x     texto sobre o preenchimento pastel
+   ========================================================= */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --border: #e1e6ed;
+  --border-strong: #cad2dd;
+  --text: #283142;
+  --muted: #697488;
+  --faint: #a3adbb;
+
+  --primary: #4a7cc8;
+  --primary-dark: #2f5a9e;
+  --primary-fill: #b5cff6;
+  --primary-shadow: #92b3e6;
+  --primary-soft: #eaf1fc;
+  --on-primary: #1f3d6b;
+
+  --success: #3fa672;
+  --success-dark: #23764c;
+  --success-fill: #b6e3ca;
+  --success-shadow: #8fcca9;
+  --success-soft: #e9f6ef;
+  --on-success: #1d5a3a;
+
+  --danger: #e06c75;
+  --danger-dark: #b0434d;
+  --danger-fill: #f5c3c7;
+  --danger-shadow: #e3a0a6;
+  --danger-soft: #fcedee;
+  --on-danger: #7a2730;
+
+  --gold: #e8b04a;
+  --gold-dark: #a57615;
+  --gold-fill: #f7dfa2;
+  --gold-shadow: #e6c679;
+  --gold-soft: #fdf5e2;
+  --on-gold: #5e4510;
+
+  --flame: #ef8f55;
+  --flame-dark: #c4622a;
+  --flame-fill: #f9cdab;
+  --flame-shadow: #ecb085;
+  --flame-soft: #fdf0e7;
+  --on-flame: #7a3b12;
+
+  --locked: #e6eaf0;
+  --locked-dark: #cfd6e0;
+  --locked-text: #a3adbb;
+
+  /* escala de azuis pastel (claro → profundo) */
+  --fam-1: #cadcf7;
+  --fam-2: #b8d0f4;
+  --fam-3: #a6c4f1;
+  --fam-4: #94b7ec;
+  --fam-5: #82aae6;
+  --fam-6: #719ddf;
+  --fam-7: #6190d7;
+
+  --backdrop: rgba(40, 49, 66, 0.32);
+
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+
+  --font: 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --music-font: 'Noto Music', 'Segoe UI Symbol', serif;
+
+  --header-h: 64px;
+  --nav-h: 68px;
+
+  color-scheme: light;
+}
+
+/* Squircle: quando o navegador suporta corner-shape, os raios aumentam
+   para manter a mesma sensação visual com a curva mais suave. */
+@supports (corner-shape: squircle) {
+  :root {
+    --r-xs: 12px;
+    --r-sm: 18px;
+    --r-md: 26px;
+    --r-lg: 34px;
+    --r-xl: 44px;
+  }
+  * {
+    corner-shape: squircle;
+  }
+  .round {
+    corner-shape: round;
+  }
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+strong {
+  font-weight: 800;
+}
+
+.music {
+  font-family: var(--music-font);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* =========================================================
+   Botões "3D" (sombra sólida, sem degradê)
+   ========================================================= */
+.btn {
+  --c: var(--primary-fill);
+  --c-dark: var(--primary-shadow);
+  --c-text: var(--on-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--c);
+  color: var(--c-text);
+  box-shadow: 0 4px 0 var(--c-dark);
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.15s ease;
+  user-select: none;
+  margin-bottom: 4px;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--c-dark);
+}
+
+.btn:disabled {
+  --c: var(--locked);
+  --c-dark: var(--locked-dark);
+  --c-text: var(--locked-text);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-success {
+  --c: var(--success-fill);
+  --c-text: var(--on-success);
+  --c-dark: var(--success-shadow);
+}
+
+.btn-danger {
+  --c: var(--danger-fill);
+  --c-text: var(--on-danger);
+  --c-dark: var(--danger-shadow);
+}
+
+.btn-gold {
+  --c: var(--gold-fill);
+  --c-dark: var(--gold-shadow);
+  --c-text: var(--on-gold);
+}
+
+.btn-ghost {
+  --c: var(--surface);
+  --c-dark: var(--border);
+  --c-text: var(--primary-dark);
+  border: 2px solid var(--border);
+}
+
+.btn-ghost:active:not(:disabled) {
+  box-shadow: 0 0 0 var(--border);
+}
+
+.btn-plain {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+}
+
+.btn-plain:hover {
+  background: var(--primary-soft);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* =========================================================
+   Cartões
+   ========================================================= */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Barra de progresso */
+.progress {
+  position: relative;
+  height: 16px;
+  background: var(--locked);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--fam-6);
+  border-radius: 99px;
+  transition: width 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.progress > span::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 10px;
+  right: 10px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* =========================================================
+   Animações utilitárias
+   ========================================================= */
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(4px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-6px);
+  }
+  40%,
+  60% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -6px);
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.rise-in {
+  animation: rise-in 0.4s ease both;
+}
+
+.shake {
+  animation: shake 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Transições de página / overlay */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-active,
+.sheet-leave-active {
+  transition:
+    transform 0.28s cubic-bezier(0.3, 1.2, 0.5, 1),
+    opacity 0.2s ease;
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  transform: translateY(40px);
+  opacity: 0;
+}
