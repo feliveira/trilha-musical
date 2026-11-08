@@ -79,10 +79,12 @@ const plural = (f: { name: string }, n: number) => (n === 1 ? f.name : `${f.name
         :key="f.value"
         class="step"
         :class="{ on: i === level }"
+        :aria-label="`${f.value} ${f.value === 1 ? f.name : `${f.name}s`}`"
+        :title="f.name"
         @click="level = i"
       >
         <span class="n">{{ f.value }}</span>
-        <span class="nm">{{ f.name }}</span>
+        <MusicFigureIcon kind="note" :value="f.value" :size="26" class="ico" />
       </button>
     </div>
   </div>
@@ -167,9 +169,9 @@ const plural = (f: { name: string }, n: number) => (n === 1 ? f.name : `${f.name
 }
 
 .controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 8px;
-  justify-content: center;
 }
 
 .ctrl {
@@ -182,44 +184,49 @@ const plural = (f: { name: string }, n: number) => (n === 1 ? f.name : `${f.name
   padding: 10px 14px;
 }
 
+/* 7 colunas exatamente iguais, independentemente do conteúdo */
 .ladder {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .step {
+  min-width: 0;
+  height: 68px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  padding: 6px 2px;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 0;
   border: 2px solid var(--border);
   background: var(--surface);
-  border-radius: var(--r-xs);
+  border-radius: var(--r-sm);
+  box-shadow: 0 3px 0 var(--border);
   color: var(--muted);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.step:active {
+  transform: translateY(3px);
+  box-shadow: none;
 }
 
 .step .n {
   font-weight: 900;
   font-size: 16px;
+  line-height: 1;
 }
 
-.step .nm {
-  font-size: 9px;
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-@media (min-width: 560px) {
-  .step .nm {
-    font-size: 11px;
-  }
+.step .ico {
+  color: inherit;
 }
 
 .step.on {
+  box-shadow: 0 3px 0 var(--primary-shadow);
   border-color: var(--primary);
   background: var(--primary-soft);
   color: var(--primary-dark);

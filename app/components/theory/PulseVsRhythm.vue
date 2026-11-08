@@ -78,9 +78,16 @@ onBeforeUnmount(stop)
           v-for="(r, i) in RHYTHM"
           :key="i"
           class="blk"
-          :class="{ rest: r.rest, on: seg === i }"
+          :class="[r.rest ? 'rest' : r.len >= 1 ? 'long' : 'short', { on: seg === i }]"
           :style="{ gridColumn: `${r.start * 2 + 1} / span ${r.len * 2}` }"
-        >{{ r.rest ? 'silêncio' : r.len >= 2 ? 'longo' : r.len < 1 ? 'curto' : '' }}</span>
+          :aria-label="r.rest ? 'silêncio' : r.len >= 1 ? 'som longo' : 'som curto'"
+        />
+      </div>
+      <span />
+      <div class="legend">
+        <span><i class="sw long" /> longo</span>
+        <span><i class="sw short" /> curto</span>
+        <span><i class="sw rest" /> silêncio</span>
       </div>
     </div>
 
@@ -198,45 +205,83 @@ onBeforeUnmount(stop)
   gap: 3px;
 }
 
-.blk {
-  height: 28px;
-  display: grid;
-  place-items: center;
+.blk,
+.sw {
   border-radius: var(--r-xs);
-  background: var(--primary-fill);
-  color: var(--on-primary);
-  font-size: 10px;
-  font-weight: 800;
-  overflow: hidden;
-  transition: background 0.1s;
+  transition:
+    background 0.1s,
+    transform 0.1s;
 }
 
-.blk.rest {
+.blk {
+  height: 30px;
+}
+
+.long {
+  background: var(--fam-6);
+}
+
+.short {
+  background: var(--fam-2);
+}
+
+.rest {
   background: transparent;
   border: 2px dashed var(--border-strong);
-  color: var(--faint);
 }
 
 .blk.on {
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-dark);
+  transform: scaleY(1.15);
 }
 
 .blk.rest.on {
   background: var(--surface-2);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--muted);
 }
 
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sw {
+  display: inline-block;
+  height: 14px;
+}
+
+.sw.long {
+  width: 26px;
+}
+
+.sw.short {
+  width: 12px;
+}
+
+.sw.rest {
+  width: 18px;
+}
+
 .controls {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .c {
   min-height: 44px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 8px 4px;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
 }
 </style>
