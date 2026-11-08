@@ -34,16 +34,16 @@ A coleção `users` e seus índices são criados automaticamente no primeiro ace
 
 O conteúdo fica em `app/data/`:
 
-- `modulo-01.ts` — teoria (seções e blocos) e banco de questões do Módulo 1.
+- `modulo-01.ts`, `modulo-02.ts` — teoria (seções e blocos) e banco de questões de cada módulo.
 - `modules.ts` — lista dos 16 módulos, nota mínima para liberar o próximo (`PASS_SCORE`) e questões por sessão.
 
-Para um novo módulo, crie `modulo-02.ts` seguindo o mesmo formato e adicione-o ao array `ready` em `modules.ts`. Os módulos sem conteúdo aparecem na trilha como "Em breve".
+Para um novo módulo, crie `modulo-03.ts` seguindo o mesmo formato e adicione-o ao array `ready` em `modules.ts`. Os módulos sem conteúdo aparecem na trilha como "Em breve".
 
-**Tipos de bloco de teoria:** `p`, `def`, `tip`, `warn`, `wave`, `instruments`, `cards` (com som opcional), `staircase`, `octaves`, `staffAnatomy`, `staff` (pauta com notas) e `clefs`.
+**Tipos de bloco de teoria:** `p`, `def`, `tip`, `warn`, `wave`, `instruments`, `cards` (com som opcional), `staircase`, `octaves`, `staffAnatomy`, `staff` (pauta com notas) `clefs`, `h` (subtítulo), `figuresTable`, `chocolate`, `noteAnatomy`, `beams`, `rhythm` (trecho com figuras, fórmula e barras, tocável), `barlines`, `timeSig` e `pulse`.
 
 **Tipos de questão:**
 
-- `choice` — múltipla escolha; `answer` é o índice da opção correta (as opções são embaralhadas na tela). Aceita `staff` para mostrar uma pauta.
+- `choice` — múltipla escolha; `answer` é o índice da opção correta (as opções são embaralhadas na tela). Aceita `visual` (pauta, figuras, trecho rítmico, fórmula de compasso, barra, partes da nota) e `optionVisuals` para opções desenhadas.
 - `fill` — completar frase; use `___` para cada lacuna, `answers` na ordem e `distractors` como palavras extras.
 
 As posições na pauta (`staff.notes`) contam de baixo para cima: `0` = 1ª linha, `1` = 1º espaço, `2` = 2ª linha … `8` = 5ª linha; negativos e valores acima de 8 usam linhas suplementares.
@@ -52,7 +52,10 @@ As posições na pauta (`staff.notes`) contam de baixo para cima: `0` = 1ª linh
 
 - **XP:** 10 por acerto de primeira, +20 em lição perfeita, +15 na primeira leitura da teoria.
 - **Nota/estrelas:** % de acertos de primeira. 60% = 1 estrela (libera o próximo módulo), 80% = 2, 100% = 3.
-- **Ofensiva:** dias seguidos com pelo menos uma lição ou leitura.
+- **Ofensiva:** dias seguidos com pelo menos uma lição, leitura ou partida no Ensaio.
+- **Ranking semanal:** soma o XP de segunda 00:00 a domingo 23:59 (horário de Brasília). Na virada da semana, quem terminou em 1º ganha uma vitória (fica no perfil) e o XP semanal de todos zera. O XP total nunca zera.
+- **Nome no ranking:** cada aluno pode definir seu nome na tela de perfil (sem nome, usamos o início do e-mail).
+- **Ensaio (`/ensaio`):** jogos que valem XP — Leitura relâmpago (notas na pauta em 60 s, claves de sol/fá/dó), Soma de figuras (som ou silêncio) e Pares de figuras (nome, pausa ou número).
 - Questões erradas voltam no fim da lição até serem acertadas (sem afetar a nota).
 - Sequências de acertos, efeitos sonoros (podem ser silenciados) e confete.
 - Atalhos no computador: teclas `1`–`4` escolhem a opção, `Enter` verifica/continua.

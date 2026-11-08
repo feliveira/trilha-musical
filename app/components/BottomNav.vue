@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Route, Trophy, User } from 'lucide-vue-next'
+import { Route, Trophy, User, Gamepad2 } from 'lucide-vue-next'
 
 const items = [
   { to: '/', label: 'Trilha', icon: Route },
+  { to: '/ensaio', label: 'Ensaio', icon: Gamepad2 },
   { to: '/ranking', label: 'Ranking', icon: Trophy },
   { to: '/perfil', label: 'Perfil', icon: User },
 ]

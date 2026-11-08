@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   progress.attempts += 1
   progress.lastPlayedAt = new Date().toISOString()
 
-  user.xp += xpGain
+  addXp(user, xpGain)
   const streakUp = touchStreak(user, body?.dateKey)
 
   await saveUser(user)

@@ -46,6 +46,19 @@ const FAMILY_COLORS = ['--fam-7', '--fam-6', '--fam-5', '--fam-4']
   <TheoryStaffAnatomy v-else-if="block.kind === 'staffAnatomy'" />
   <TheoryClefExplorer v-else-if="block.kind === 'clefs'" />
 
+  <h2 v-else-if="block.kind === 'h'" class="sub">{{ block.text }}</h2>
+  <TheoryFiguresTable v-else-if="block.kind === 'figuresTable'" />
+  <TheoryChocolateBar v-else-if="block.kind === 'chocolate'" />
+  <TheoryNoteAnatomy v-else-if="block.kind === 'noteAnatomy'" />
+  <TheoryBeamExamples v-else-if="block.kind === 'beams'" />
+  <TheoryBarlineGallery v-else-if="block.kind === 'barlines'" />
+  <TheoryTimeSigExplorer v-else-if="block.kind === 'timeSig'" />
+  <TheoryPulseVsRhythm v-else-if="block.kind === 'pulse'" />
+  <figure v-else-if="block.kind === 'rhythm'" class="fig">
+    <MusicRhythmStaff :spec="block.spec" playable :metronome="block.metronome" />
+    <figcaption v-if="block.caption" class="muted">{{ block.caption }}</figcaption>
+  </figure>
+
   <figure v-else-if="block.kind === 'staff'" class="fig">
     <StaffSvg :spec="block.spec" interactive />
     <figcaption v-if="block.caption" class="muted">{{ block.caption }}</figcaption>
@@ -53,6 +66,13 @@ const FAMILY_COLORS = ['--fam-7', '--fam-6', '--fam-5', '--fam-4']
 </template>
 
 <style scoped>
+.sub {
+  font-size: 21px;
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 2px solid var(--border);
+}
+
 .para {
   font-size: 17px;
   line-height: 1.6;

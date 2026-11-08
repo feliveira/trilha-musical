@@ -115,7 +115,45 @@ export function useUser() {
     return res
   }
 
+  async function submitGame(game: string, mode: string, score: number) {
+    const res = await $fetch<{ user: UserDoc; xpGain: number; newBest: boolean; prevBest: number; streakUp: boolean }>(
+      '/api/game',
+      { method: 'POST', body: { email: user.value?.email, game, mode, score, dateKey: toDateKey() } },
+    )
+    user.value = res.user
+    return res
+  }
+
+  /** Nome exibido (perfil/ranking): o escolhido pelo usuário ou derivado do e-mail */
+  const profileName = computed(() => {
+    const u = user.value
+    if (!u) return ''
+    if (u.name?.trim()) return u.name.trim()
+    const base = u.email.split('@')[0] ?? u.email
+    return (
+      base
+        .replace(/[._-]+/g, ' ')
+        .replace(/\d+/g, '')
+        .trim()
+        .replace(/\b\w/g, (c) => c.toUpperCase()) || base
+    )
+  })
+
+  async function updateName(name: string) {
+    const u = await $fetch<UserDoc>('/api/profile', { method: 'POST', body: { email: user.value?.email, name } })
+    user.value = u
+    return u
+  }
+
+  function gameBest(game: string, mode: string) {
+    return user.value?.games?.[`${game}:${mode}`]?.best ?? 0
+  }
+
   return {
+    submitGame,
+    gameBest,
+    profileName,
+    updateName,
     user,
     ready,
     login,

@@ -20,12 +20,15 @@ function stateOf(displayIdx: number) {
 
 <template>
   <div class="choice">
-    <div v-if="q.staff" class="visual">
+    <div v-if="q.visual" class="visual">
+      <LessonQuestionVisual :visual="q.visual" />
+    </div>
+    <div v-else-if="q.staff" class="visual">
       <StaffSvg :spec="q.staff" :max-width="q.staff.notes?.length ? 360 : 260" />
     </div>
     <div v-else-if="q.glyph" class="visual glyph music">{{ q.glyph }}</div>
 
-    <div class="options" :class="{ grid: order.every((o) => q.options[o]!.length < 18) }">
+    <div class="options" :class="{ grid: q.optionVisuals || order.every((o) => q.options[o]!.length < 18) }">
       <button
         v-for="(o, i) in order"
         :key="o"
@@ -35,7 +38,10 @@ function stateOf(displayIdx: number) {
         @click="emit('select', i)"
       >
         <span class="key">{{ i + 1 }}</span>
-        <span class="txt">{{ q.options[o] }}</span>
+        <span v-if="q.optionVisuals?.[o]" class="ovis" :aria-label="q.options[o]">
+          <LessonQuestionVisual :visual="q.optionVisuals[o]!" :size="48" />
+        </span>
+        <span v-else class="txt">{{ q.options[o] }}</span>
       </button>
     </div>
   </div>
@@ -50,6 +56,7 @@ function stateOf(displayIdx: number) {
 
 .visual {
   padding: 18px 12px;
+  background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--r-lg);
 }
@@ -63,6 +70,14 @@ function stateOf(displayIdx: number) {
 .options {
   display: grid;
   gap: 10px;
+}
+
+.ovis {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-height: 64px;
+  align-items: center;
 }
 
 .options.grid {

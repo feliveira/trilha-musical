@@ -1,12 +1,15 @@
+import { currentWeekKey } from '#shared/utils/week'
+
 // Entrada simples por e-mail: busca o usuário ou cria um novo.
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ email?: string }>(event)
   const email = normalizeEmail(body?.email)
+  await ensureCurrentWeek(currentWeekKey())
 
   let user = await findUser(email)
   if (!user) {
     user = newUser(email)
     await saveUser(user)
   }
-  return user
+  return withCurrentWeek(user)
 })

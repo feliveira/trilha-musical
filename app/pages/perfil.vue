@@ -1,8 +1,38 @@
 <script setup lang="ts">
-import { Flame, Zap, Star, BookOpen, LogOut, Volume2, VolumeX } from 'lucide-vue-next'
+import { Flame, Zap, Star, BookOpen, LogOut, Volume2, VolumeX, Crown, Gamepad2, Pencil, Check, X } from 'lucide-vue-next'
 import { TOTAL_MODULES } from '~/data/modules'
 
-const { user, streak, trail, logout } = useUser()
+const { user, streak, trail, logout, profileName, updateName } = useUser()
+
+const editing = ref(false)
+const draft = ref('')
+const nameError = ref('')
+const savingName = ref(false)
+const nameInput = ref<HTMLInputElement | null>(null)
+
+function startEdit() {
+  draft.value = profileName.value
+  nameError.value = ''
+  editing.value = true
+  nextTick(() => nameInput.value?.select())
+}
+
+async function saveName() {
+  const name = draft.value.replace(/\s+/g, ' ').trim()
+  if (name.length < 2 || name.length > 30) {
+    nameError.value = 'Use entre 2 e 30 caracteres.'
+    return
+  }
+  savingName.value = true
+  try {
+    await updateName(name)
+    editing.value = false
+  } catch {
+    nameError.value = 'Não foi possível salvar. Tente de novo.'
+  } finally {
+    savingName.value = false
+  }
+}
 const { muted, toggleMute } = useAudio()
 
 const doneCount = computed(() => trail.value.filter((n) => n.status === 'done').length)
@@ -10,15 +40,33 @@ const totalStars = computed(() => trail.value.reduce((s, n) => s + n.stars, 0))
 const since = computed(() =>
   user.value ? new Date(user.value.createdAt).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '',
 )
+const gamesPlayed = computed(() => Object.values(user.value?.games ?? {}).reduce((s, g) => s + g.plays, 0))
 const played = computed(() => trail.value.filter((n) => n.progress.attempts > 0 || n.progress.theoryRead))
 </script>
 
 <template>
   <div v-if="user" class="page">
     <header class="head">
-      <div class="avatar">{{ user.email[0]?.toUpperCase() }}</div>
+      <div class="avatar">{{ profileName[0]?.toUpperCase() }}</div>
       <div class="who">
-        <h1>{{ user.email.split('@')[0] }}</h1>
+        <form v-if="editing" class="name-edit" @submit.prevent="saveName">
+          <input
+            ref="nameInput"
+            v-model="draft"
+            maxlength="30"
+            aria-label="Seu nome"
+            placeholder="Como quer ser chamado?"
+            @keydown.esc="editing = false"
+          >
+          <button class="icon-btn ok" type="submit" :disabled="savingName" aria-label="Salvar nome"><Check :size="20" :stroke-width="3" /></button>
+          <button class="icon-btn" type="button" aria-label="Cancelar" @click="editing = false"><X :size="20" :stroke-width="3" /></button>
+        </form>
+        <div v-else class="name-row">
+          <h1>{{ profileName }}</h1>
+          <button class="icon-btn edit" aria-label="Editar nome" title="Editar nome" @click="startEdit"><Pencil :size="18" /></button>
+        </div>
+        <p v-if="nameError" class="name-error">{{ nameError }}</p>
+        <p v-else-if="editing" class="muted small">Este nome aparece no ranking.</p>
         <p class="muted">{{ user.email }}</p>
         <p class="muted small">Aprendendo desde {{ since }}</p>
       </div>
@@ -52,6 +100,20 @@ const played = computed(() => trail.value.filter((n) => n.progress.attempts > 0 
         <div>
           <p class="v">{{ totalStars }}</p>
           <p class="l">Estrelas</p>
+        </div>
+      </div>
+      <div class="stat">
+        <Crown :size="26" class="c-gold" />
+        <div>
+          <p class="v">{{ user.weeklyWins ?? 0 }}</p>
+          <p class="l">{{ (user.weeklyWins ?? 0) === 1 ? 'Vitória' : 'Vitórias' }} no ranking</p>
+        </div>
+      </div>
+      <div class="stat">
+        <Gamepad2 :size="26" class="c-blue" />
+        <div>
+          <p class="v">{{ gamesPlayed }}</p>
+          <p class="l">Partidas no Ensaio</p>
         </div>
       </div>
     </div>
@@ -117,6 +179,52 @@ const played = computed(() => trail.value.filter((n) => n.progress.attempts > 0 
   min-width: 0;
 }
 
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.edit {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+
+.name-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.name-edit input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--primary);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.icon-btn.ok {
+  color: var(--success-dark);
+}
+
+.name-error {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.who {
+  flex: 1;
+}
+
 .who h1 {
   font-size: 24px;
   overflow: hidden;
@@ -171,6 +279,10 @@ h2 {
 
 .c-gold {
   color: var(--gold);
+}
+
+.c-blue {
+  color: var(--primary);
 }
 
 .c-muted {

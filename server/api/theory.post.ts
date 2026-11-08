@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const firstTime = !progress.theoryRead
   const xpGain = firstTime ? THEORY_XP : 0
   progress.theoryRead = true
-  user.xp += xpGain
+  addXp(user, xpGain)
   const streakUp = touchStreak(user, body?.dateKey)
 
   await saveUser(user)

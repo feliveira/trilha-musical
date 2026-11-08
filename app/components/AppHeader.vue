@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Flame, Zap, LogOut, Volume2, VolumeX, Route, Trophy, User } from 'lucide-vue-next'
+import { Flame, Zap, LogOut, Volume2, VolumeX, Route, Trophy, User, Gamepad2 } from 'lucide-vue-next'
 
-const { user, streak, activeToday, logout } = useUser()
+const { user, streak, activeToday, logout, profileName } = useUser()
 const { muted, toggleMute } = useAudio()
 const menuOpen = ref(false)
 
-const initial = computed(() => user.value?.email[0]?.toUpperCase() ?? '?')
+const initial = computed(() => profileName.value[0]?.toUpperCase() ?? '?')
 
 function onLogout() {
   menuOpen.value = false
@@ -23,6 +23,7 @@ function onLogout() {
 
       <nav class="desk-nav">
         <NuxtLink to="/" class="nav-link"><Route :size="20" /> Trilha</NuxtLink>
+        <NuxtLink to="/ensaio" class="nav-link"><Gamepad2 :size="20" /> Ensaio</NuxtLink>
         <NuxtLink to="/ranking" class="nav-link"><Trophy :size="20" /> Ranking</NuxtLink>
       </nav>
 

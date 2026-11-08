@@ -8,16 +8,92 @@ import type { SoundDemo } from '#shared/types'
 let ctx: AudioContext | null = null
 let master: GainNode | null = null
 
+function createContext() {
+  if (ctx) return ctx
+  const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  ctx = new AC()
+  master = ctx.createGain()
+  master.gain.value = 0.9
+  master.connect(ctx.destination)
+  return ctx
+}
+
 function audio() {
-  if (!ctx) {
-    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    ctx = new AC()
-    master = ctx.createGain()
-    master.gain.value = 0.9
-    master.connect(ctx.destination)
+  const c = createContext()
+  // iOS também usa o estado "interrupted" (ligação, app em segundo plano)
+  if (c.state !== 'running') void c.resume().catch(() => {})
+  return { c, out: master! }
+}
+
+// ---------- Desbloqueio de áudio (iPhone / iPad) ----------
+// No iOS (Safari e Chrome usam o mesmo motor), o Web Audio:
+// 1. fica mudo quando a chave lateral de silencioso está ligada;
+// 2. só é liberado dentro de certos eventos de toque (touchend/click);
+// 3. pode ficar "interrupted" depois de ligações ou ao voltar do segundo plano.
+// Solução: pedir a sessão de áudio "playback" (iOS 17+), tocar um áudio HTML
+// silencioso no primeiro toque (iOS antigos) e retomar o contexto a cada gesto.
+
+let silentEl: HTMLAudioElement | null = null
+let silentPlayed = false
+
+function silentWavUrl() {
+  // WAV PCM 8-bit mono, 8 kHz, 0,05 s de silêncio
+  const samples = 400
+  const buf = new ArrayBuffer(44 + samples)
+  const v = new DataView(buf)
+  const w = (o: number, s: string) => [...s].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)))
+  w(0, 'RIFF'); v.setUint32(4, 36 + samples, true); w(8, 'WAVE')
+  w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true)
+  w(36, 'data'); v.setUint32(40, samples, true)
+  for (let i = 0; i < samples; i++) v.setUint8(44 + i, 128)
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+}
+
+function unlockAudio() {
+  try {
+    const nav = navigator as Navigator & { audioSession?: { type: string } }
+    if (nav.audioSession && nav.audioSession.type !== 'playback') nav.audioSession.type = 'playback'
+  } catch {}
+
+  try {
+    const c = createContext()
+    if (c.state !== 'running') void c.resume().catch(() => {})
+    // um "tique" silencioso dentro do gesto libera o contexto no iOS
+    const src = c.createBufferSource()
+    src.buffer = c.createBuffer(1, 1, 22050)
+    src.connect(c.destination)
+    src.start(0)
+  } catch {}
+
+  try {
+    if (!silentEl) {
+      silentEl = new Audio(silentWavUrl())
+      silentEl.setAttribute('playsinline', '')
+      silentEl.preload = 'auto'
+    }
+    if (!silentPlayed && silentEl.paused) {
+      void silentEl
+        .play()
+        .then(() => (silentPlayed = true))
+        .catch(() => {})
+    }
+  } catch {}
+}
+
+let unlockInstalled = false
+
+/** Instala os ouvintes de gesto que mantêm o áudio liberado (chamado por um plugin client-side) */
+export function installAudioUnlock() {
+  if (unlockInstalled || typeof window === 'undefined') return
+  unlockInstalled = true
+  const opts = { capture: true, passive: true } as const
+  for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) {
+    window.addEventListener(ev, unlockAudio, opts)
   }
-  if (ctx.state === 'suspended') void ctx.resume()
-  return { c: ctx, out: master! }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') void ctx.resume().catch(() => {})
+  })
 }
 
 interface ToneOpts {
@@ -81,6 +157,16 @@ export function useAudio() {
 
   function playMidi(midi: number, dur = 0.7) {
     pianoNote(midi, 0, dur)
+  }
+
+  /** Agenda uma nota daqui a `start` segundos */
+  function scheduleNote(midi: number, start: number, dur: number, vol = 0.22) {
+    pianoNote(midi, start, dur, vol)
+  }
+
+  /** Clique de metrônomo; o 1º tempo do compasso é mais forte */
+  function scheduleClick(start: number, accent = false) {
+    tone(accent ? 1760 : 1320, { start, dur: 0.06, type: 'square', vol: accent ? 0.07 : 0.04, attack: 0.002, filter: 4000 })
   }
 
   function playSequence(midis: number[], step = 0.32, dur = 0.5) {
@@ -157,5 +243,5 @@ export function useAudio() {
     },
   }
 
-  return { muted, toggleMute, playMidi, playSequence, playDemo, sfx }
+  return { muted, toggleMute, playMidi, playSequence, playDemo, scheduleNote, scheduleClick, sfx }
 }
