@@ -22,11 +22,14 @@ export default defineEventHandler(async (event): Promise<RankingResponse> => {
   let myPosition: number | null = null
   let myWeeklyXp = 0
   if (me) {
-    const user = await findUser(me)
-    myWeeklyXp = user && user.weekKey === week ? (user.weeklyXp ?? 0) : 0
-    if (myWeeklyXp > 0) {
-      const idx = top.findIndex((u) => u.email === me)
-      myPosition = idx >= 0 ? idx + 1 : (await countWeeklyAbove(week, myWeeklyXp)) + 1
+    const idx = top.findIndex((u) => u.email === me)
+    if (idx >= 0) {
+      // já está na lista: nenhuma consulta extra
+      myPosition = idx + 1
+      myWeeklyXp = top[idx]!.weeklyXp ?? 0
+    } else {
+      myWeeklyXp = await findWeeklyXp(me, week)
+      if (myWeeklyXp > 0) myPosition = (await countWeeklyAbove(week, myWeeklyXp)) + 1
     }
   }
 

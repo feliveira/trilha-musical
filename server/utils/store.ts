@@ -11,10 +11,36 @@ interface MetaDoc {
   _id: string
   currentWeek?: string
   lastWinners?: string[]
+  /** Versão dos índices já criados (documento _id: 'schema') */
+  version?: number
 }
+
+/** Campos que o ranking precisa — evita trafegar o documento inteiro de cada aluno */
+export type RankingRow = Pick<UserDoc, 'email' | 'name' | 'weeklyXp' | 'streak' | 'lastActiveDate' | 'weeklyWins'>
+const RANKING_PROJECTION = { _id: 0, email: 1, name: 1, weeklyXp: 1, streak: 1, lastActiveDate: 1, weeklyWins: 1 } as const
+
+/** Aumente quando mudar os índices abaixo; eles são recriados uma única vez */
+const SCHEMA_VERSION = 2
 
 let clientPromise: Promise<MongoClient> | null = null
 let warned = false
+
+/**
+ * Cria os índices só quando a versão salva no banco é antiga.
+ * Assim cada nova instância serverless faz 1 leitura, em vez de recriar os índices.
+ */
+async function ensureIndexes(client: MongoClient, dbName: string) {
+  const db = client.db(dbName)
+  const meta = db.collection<MetaDoc>('meta')
+  const schema = await meta.findOne({ _id: 'schema' }, { projection: { version: 1 } })
+  if ((schema?.version ?? 0) >= SCHEMA_VERSION) return
+  const users = db.collection<UserDoc>('users')
+  await users.createIndex({ email: 1 }, { unique: true })
+  await users.createIndex({ weekKey: 1, weeklyXp: -1 })
+  // v2: remove o índice do ranking antigo (XP total), que não é mais usado
+  await users.dropIndex('xp_-1').catch(() => {})
+  await meta.updateOne({ _id: 'schema' }, { $set: { version: SCHEMA_VERSION } }, { upsert: true })
+}
 
 async function getDb() {
   const config = useRuntimeConfig()
@@ -29,11 +55,17 @@ async function getDb() {
   const dbName = (config.mongodbDb as string) || 'trilha-musical'
 
   if (!clientPromise) {
-    clientPromise = new MongoClient(uri, { maxPoolSize: 5 }).connect().then(async (client) => {
-      const users = client.db(dbName).collection<UserDoc>('users')
-      await users.createIndex({ email: 1 }, { unique: true })
-      await users.createIndex({ weekKey: 1, weeklyXp: -1 })
-      return client
+    // Ajustes para serverless (Vercel): poucas conexões por instância, fechadas quando ociosas,
+    // e monitoramento por polling (1 conexão por servidor em vez de 2).
+    const client = new MongoClient(uri, {
+      maxPoolSize: 2,
+      minPoolSize: 0,
+      maxIdleTimeMS: 60_000,
+      serverMonitoringMode: 'poll',
+    })
+    clientPromise = client.connect().then(async (c) => {
+      await ensureIndexes(c, dbName)
+      return c
     })
     clientPromise.catch(() => {
       clientPromise = null
@@ -90,19 +122,28 @@ export async function saveUser(user: UserDoc): Promise<void> {
 
 // ---------- ranking semanal ----------
 
-export async function topWeekly(week: string, limit: number): Promise<UserDoc[]> {
+export async function topWeekly(week: string, limit: number): Promise<RankingRow[]> {
   const col = await usersCol()
   if (col) {
     return col
-      .find({ weekKey: week, weeklyXp: { $gt: 0 } }, { projection: { _id: 0 } })
+      .find({ weekKey: week, weeklyXp: { $gt: 0 } }, { projection: RANKING_PROJECTION })
       .sort({ weeklyXp: -1, updatedAt: 1 })
       .limit(limit)
-      .toArray()
+      .toArray() as Promise<RankingRow[]>
   }
   return Object.values(await readLocal())
     .filter((u) => u.weekKey === week && (u.weeklyXp ?? 0) > 0)
     .sort((a, b) => (b.weeklyXp ?? 0) - (a.weeklyXp ?? 0))
     .slice(0, limit)
+}
+
+/** XP semanal de um aluno, lendo só os dois campos necessários */
+export async function findWeeklyXp(email: string, week: string): Promise<number> {
+  const col = await usersCol()
+  const u = col
+    ? await col.findOne({ email }, { projection: { _id: 0, weekKey: 1, weeklyXp: 1 } })
+    : (await readLocal())[email]
+  return u && u.weekKey === week ? (u.weeklyXp ?? 0) : 0
 }
 
 export async function countWeeklyAbove(week: string, xp: number): Promise<number> {
@@ -148,10 +189,16 @@ async function claimRollover(newWeek: string): Promise<string | null> {
 async function closeWeek(week: string) {
   const col = await usersCol()
   if (col) {
-    const [top] = await col.find({ weekKey: week, weeklyXp: { $gt: 0 } }).sort({ weeklyXp: -1 }).limit(1).toArray()
+    const [top] = await col
+      .find({ weekKey: week, weeklyXp: { $gt: 0 } }, { projection: { _id: 0, weeklyXp: 1 } })
+      .sort({ weeklyXp: -1 })
+      .limit(1)
+      .toArray()
     let winners: string[] = []
     if (top) {
-      const winnerDocs = await col.find({ weekKey: week, weeklyXp: top.weeklyXp }).toArray()
+      const winnerDocs = await col
+        .find({ weekKey: week, weeklyXp: top.weeklyXp }, { projection: { _id: 0, email: 1, name: 1 } })
+        .toArray()
       winners = winnerDocs.map((u) => publicName(u))
       await col.updateMany(
         { weekKey: week, weeklyXp: top.weeklyXp },
